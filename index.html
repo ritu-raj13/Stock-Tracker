@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Stock Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <header class="app-header">
+        <div class="brand">
+            <div class="logo">📈</div>
+            <h1>Stock Tracker</h1>
+        </div>
+        <div class="toolbar" id="toolbar">
+            <input type="search" id="searchInput" placeholder="Search stocks, notes, tags..." aria-label="Search" />
+            <select id="fundFilter" aria-label="Fundamental category filter">
+                <option value="">All Fundamentals</option>
+            </select>
+            <select id="techFilter" aria-label="Technical category filter">
+                <option value="">All Technicals</option>
+            </select>
+            <select id="sectorFilter" aria-label="Sector filter">
+                <option value="">All Sectors</option>
+            </select>
+            <select id="marketCapFilter" aria-label="Market cap filter">
+                <option value="">All Caps</option>
+                <option value="Large">Large</option>
+                <option value="Mid">Mid</option>
+                <option value="Small">Small</option>
+                <option value="Micro">Micro</option>
+            </select>
+            
+            <select id="groupFilter" aria-label="Stock group filter">
+                <option value="">All Groups</option>
+            </select>
+            <select id="statusFilter" aria-label="Status filter">
+                <option value="">All Statuses</option>
+                <option value="watching">Watching</option>
+                <option value="buy_zone">Buy Zone</option>
+                <option value="sell_zone">Sell Zone</option>
+                <option value="hold_zone">Hold Zone</option>
+                <option value="average_zone">Average Zone</option>
+            </select>
+            <select id="sortSelect" aria-label="Sort by">
+                <option value="name-asc">Name A→Z</option>
+                <option value="name-desc">Name Z→A</option>
+                <option value="updated-desc">Recently Updated</option>
+                <option value="updated-asc">Least Recently Updated</option>
+            </select>
+            <button id="addStockBtn" class="primary">Add Stock</button>
+            <div class="more-actions">
+                <button id="clearFiltersBtn" title="Clear All Filters">Clear Filters</button>
+                <button id="exportBtn" title="Export CSV">Export</button>
+            </div>
+        </div>
+    </header>
+
+    <main id="content">
+        <div id="groupsContainer" class="groups"></div>
+    </main>
+
+    <dialog id="stockDialog">
+        <form method="dialog" id="stockForm">
+            <h3 id="dialogTitle">Add Stock</h3>
+            <div class="form-row">
+                <label for="stockName">Name</label>
+                <input id="stockName" name="name" required placeholder="e.g., HDFC Life" />
+            </div>
+            <div class="form-row">
+                <label for="stockGroup">Group</label>
+                <input id="stockGroup" name="stockGroup" list="groupList" placeholder="e.g., Core, Watchlist" />
+                <datalist id="groupList"></datalist>
+            </div>
+            <div class="form-row grid-2">
+                <div>
+                    <label for="fundCategory">Fundamental Category</label>
+                    <input id="fundCategory" name="fundCategory" list="fundList" placeholder="e.g., 10 year stock" />
+                    <datalist id="fundList"></datalist>
+                </div>
+                <div>
+                    <label for="techCategory">Technical Category</label>
+                    <input id="techCategory" name="techCategory" list="techList" placeholder="e.g., Rounding Bottom" />
+                    <datalist id="techList"></datalist>
+                </div>
+            </div>
+            <div class="form-row grid-2">
+                <div>
+                    <label for="marketCap">Market Cap</label>
+                    <select id="marketCap" name="marketCap">
+                        <option value="">Not set</option>
+                        <option value="Large">Large</option>
+                        <option value="Mid">Mid</option>
+                        <option value="Small">Small</option>
+                        <option value="Micro">Micro</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="sector">Sector</label>
+                    <input id="sector" name="sector" list="sectorList" placeholder="e.g., FMCG, Auto" />
+                    <datalist id="sectorList"></datalist>
+                </div>
+            </div>
+            <div class="form-row">
+                <label for="currentPrice">Current Price</label>
+                <input id="currentPrice" name="currentPrice" type="number" step="0.01" placeholder="e.g., 2150" required />
+            </div>
+            
+            <div class="form-row grid-2">
+                <div>
+                    <label for="buyZone">Buy Zone</label>
+                    <input id="buyZone" name="buyZone" placeholder="e.g., 2000-2200 or 2150" />
+                </div>
+                <div>
+                    <label for="sellZone">Sell Zone</label>
+                    <input id="sellZone" name="sellZone" placeholder="e.g., 3000-3200 or 3400" />
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <label for="avgZone">Average Zone</label>
+                <input id="avgZone" name="avgZone" placeholder="e.g., 150-180 or 165" />
+            </div>
+            
+            <div class="form-row">
+                <label for="status">Status</label>
+                <select id="status" name="status" required>
+                    <option value="watching">Watching</option>
+                    <option value="buy_zone">Buy Zone</option>
+                    <option value="sell_zone">Sell Zone</option>
+                    <option value="hold_zone">Hold Zone</option>
+                    <option value="average_zone">Average Zone</option>
+                </select>
+            </div>
+            <menu class="dialog-actions">
+                <button type="button" value="cancel" id="cancelDialogBtn">Cancel</button>
+                <button value="default" class="primary">Save</button>
+            </menu>
+        </form>
+    </dialog>
+
+    <template id="groupTemplate">
+        <section class="group">
+            <header class="group-header">
+                <h2 class="group-title"></h2>
+                <div style="display:flex;align-items:center;gap:8px">
+                    <span class="group-count"></span>
+                    <button class="icon-btn toggle-group" title="Collapse/Expand">▾</button>
+                </div>
+            </header>
+            <div class="group-body"></div>
+        </section>
+    </template>
+
+    <template id="subgroupTemplate">
+        <section class="subgroup">
+            <header class="subgroup-header">
+                <h3 class="subgroup-title"></h3>
+                <span class="group-count"></span>
+            </header>
+            <div class="cards"></div>
+        </section>
+    </template>
+
+    <template id="cardTemplate">
+        <article class="card">
+            <div class="card-main">
+                <div>
+                    <h3 class="card-title"></h3>
+                    <div class="card-meta">
+                        <span class="badge status"></span>
+                        <span class="badge price"></span>
+                        <span class="badge buy"></span>
+                        <span class="badge sell"></span>
+                        <span class="badge avg"></span>
+                        <span class="badge tech"></span>
+                        <span class="badge cap"></span>
+                        <span class="badge sector"></span>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <button class="icon-btn edit" title="Edit">✏️</button>
+                    <button class="icon-btn delete" title="Delete">🗑️</button>
+                </div>
+            </div>
+            
+            <footer class="card-footer">
+                <span class="updated"></span>
+            </footer>
+        </article>
+    </template>
+
+    <footer style="color:#9ca3af; font-size:12px; padding:24px 16px; text-align:center;">
+        © Ritu Raj 2025
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
+
