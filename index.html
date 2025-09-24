@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     <title>Stock Tracker</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -54,7 +57,9 @@
             <button id="addStockBtn" class="primary">Add Stock</button>
             <div class="more-actions">
                 <button id="clearFiltersBtn" title="Clear All Filters">Clear Filters</button>
-                <button id="exportBtn" title="Export CSV">Export</button>
+                <button id="exportJsonBtn" title="Export JSON">Export JSON</button>
+                <input type="file" id="importJsonInput" accept="application/json" style="display:none" />
+                <button id="importJsonBtn" title="Import JSON">Import JSON</button>
             </div>
         </div>
     </header>
@@ -197,7 +202,7 @@
         © Ritu Raj 2025
     </footer>
 
-    <script src="app.js"></script>
+    <script src="app.js?v=3"></script>
 </body>
 </html>
 

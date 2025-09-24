@@ -21,38 +21,7 @@ const STORAGE_KEY = 'stock-tracker:v1';
  * }
  */
 
-/** Seed initial data from user's notes if storage is empty */
-const seedData = [
-  // Stock for 10 year
-  { name: 'HDFC Life Insurance', fundCategory: '10 year stock', techCategory: '', sector: 'Insurance', marketCap: 'Large', stockGroup: 'Core', buyZones: [], sellZones: [], currentPrice: null, status: 'watching', notes: '' },
-  { name: 'SBI Life Insurance', fundCategory: '10 year stock', techCategory: '', sector: 'Insurance', marketCap: 'Large', stockGroup: 'Core', buyZones: [], sellZones: [], currentPrice: null, status: 'watching', notes: '' },
-  { name: 'Medanta', fundCategory: '10 year stock', techCategory: '', sector: 'Healthcare', marketCap: 'Mid', stockGroup: 'Core', buyZones: [], sellZones: [], currentPrice: null, status: 'watching', notes: '' },
-  { name: 'Maruti', fundCategory: '10 year stock', techCategory: '', sector: 'Auto', marketCap: 'Large', stockGroup: 'Core', buyZones: [], sellZones: [], currentPrice: null, status: 'watching', notes: '' },
-
-  // Rounding Bottom
-  { name: 'Dabur', fundCategory: 'FMCG', techCategory: 'Rounding Bottom', sector: 'FMCG', marketCap: 'Large', stockGroup: 'Watchlist', buyZones: [{ min: 520, max: 520 }], sellZones: [], currentPrice: null, status: 'buy_zone', notes: 'FMCG Stocks - DABUR (buy @520)' },
-
-  // Range Bound Stock
-  { name: 'Angel One', fundCategory: 'Short term stock', techCategory: 'Range Bound', sector: 'Brokers', marketCap: 'Mid', stockGroup: 'Swing Picks', buyZones: [{ min: 2000, max: 2200 }], sellZones: [{ min: 3000, max: 3400 }], currentPrice: null, status: 'buy_zone' },
-  { name: 'Aavas', fundCategory: 'Short term stock', techCategory: 'Range Bound', sector: 'Finance', marketCap: 'Mid', stockGroup: 'Swing Picks', buyZones: [{ min: 1300, max: 1400 }], sellZones: [], currentPrice: null, status: 'buy_zone' },
-  { name: 'Syngene', fundCategory: 'Short term stock', techCategory: 'Range Bound', sector: 'Pharma', marketCap: 'Mid', stockGroup: 'Watchlist', buyZones: [], sellZones: [], currentPrice: null, status: 'watching' },
-  { name: 'ACC', fundCategory: 'Short term stock', techCategory: 'Range Bound', sector: 'Cement', marketCap: 'Large', stockGroup: 'Watchlist', buyZones: [{ min: 1800, max: 1800 }], sellZones: [], currentPrice: null, status: 'buy_zone' },
-
-  // Averaging
-  { name: 'Yes Bank', fundCategory: 'Averaging', techCategory: '', sector: 'Banking', marketCap: 'Small', stockGroup: 'Averaging', buyZones: [], sellZones: [], currentPrice: null, status: 'average_zone' },
-  { name: 'Power Finance Corp', fundCategory: 'Averaging', techCategory: '', sector: 'Finance', marketCap: 'Large', stockGroup: 'Averaging', buyZones: [], sellZones: [], currentPrice: null, status: 'average_zone' },
-
-  // Future
-  { name: 'Devyani', fundCategory: 'Future', techCategory: 'Range Bound', sector: 'QSR', marketCap: 'Mid', stockGroup: 'Watchlist', buyZones: [], sellZones: [], currentPrice: null, status: 'watching', notes: 'Range Bound' },
-  { name: 'Indiamart', fundCategory: 'Future', techCategory: '', sector: 'IT', marketCap: 'Mid', stockGroup: 'Watchlist', buyZones: [], sellZones: [], currentPrice: null, status: 'watching' },
-
-  // Rounding Bottom (3 months data)
-  { name: 'Adani Enterprise', fundCategory: '', techCategory: 'Rounding Bottom (3 months)', sector: 'Conglomerate', marketCap: 'Large', stockGroup: 'Watchlist', buyZones: [], sellZones: [], currentPrice: null, status: 'watching' },
-  { name: 'Adani Energy Solutions', fundCategory: '', techCategory: 'Rounding Bottom (3 months)', sector: 'Energy', marketCap: 'Large', stockGroup: 'Watchlist', buyZones: [], sellZones: [], currentPrice: null, status: 'watching' },
-
-  // Growing Future Stock
-  { name: 'MTAR Technologies', fundCategory: 'Growing Future Stock', techCategory: 'Rounding Bottom (3 months)', sector: 'Manufacturing', marketCap: 'Small', stockGroup: 'Watchlist', buyZones: [], sellZones: [], currentPrice: null, status: 'watching', notes: 'Rounding Bottom, 3 months data' },
-];
+// No initial seed data; first load starts empty
 
 function createId() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
 
@@ -74,25 +43,7 @@ function saveState(state) {
 function initializeState() {
   const loaded = loadState();
   if (loaded && Array.isArray(loaded.stocks)) return loaded;
-  const now = Date.now();
-  const stocks = seedData.map(s => ({
-    id: createId(),
-    name: s.name,
-    fundCategory: s.fundCategory || '',
-    techCategory: s.techCategory || '',
-    sector: s.sector || '',
-    marketCap: s.marketCap || '',
-    strategyType: '',
-    stockGroup: s.stockGroup || '',
-    buyZones: s.buyZones || [],
-    sellZones: s.sellZones || [],
-    avgZones: s.avgZones || [],
-    currentPrice: s.currentPrice ?? null,
-    status: s.status || 'watching',
-    notes: s.notes || '',
-    updatedAt: now,
-  }));
-  const state = { stocks };
+  const state = { stocks: [] };
   saveState(state);
   return state;
 }
@@ -112,7 +63,9 @@ const statusFilter = document.getElementById('statusFilter');
 const sortSelect = document.getElementById('sortSelect');
 const addStockBtn = document.getElementById('addStockBtn');
 const clearFiltersBtn = document.getElementById('clearFiltersBtn');
-const exportBtn = document.getElementById('exportBtn');
+const exportJsonBtn = document.getElementById('exportJsonBtn');
+const importJsonInput = document.getElementById('importJsonInput');
+const importJsonBtn = document.getElementById('importJsonBtn');
 
 const groupTemplate = document.getElementById('groupTemplate');
 const subgroupTemplate = document.getElementById('subgroupTemplate');
@@ -505,49 +458,73 @@ if (cancelDialogBtn) {
   });
 }
 
-// CSV Export
-exportBtn.addEventListener('click', () => {
-  const headers = [
-    'Name','Fundamental','Technical','Group','Sector','MarketCap','Strategy','NSE','BSE','BuyZones','SellZones','StopLoss','PositionSize','Status','Notes','UpdatedAt','Price','PriceUpdatedAt'
-  ];
-  const rows = appState.stocks.map(s => [
-    s.name,
-    s.fundCategory || '',
-    s.techCategory || '',
-    s.stockGroup || '',
-    s.sector || '',
-    s.marketCap || '',
-    s.strategyType || '',
-    s.symbolNSE || '',
-    s.symbolBSE || '',
-    (s.buyZones||[]).map(z => z.min===z.max?`${z.min}`:`${z.min}-${z.max}`).join(' | '),
-    (s.sellZones||[]).map(z => z.min===z.max?`${z.min}`:`${z.min}-${z.max}`).join(' | '),
-    s.stopLoss || '',
-    s.positionSize || '',
-    s.status,
-    (s.notes||'').replaceAll('\n',' '),
-    new Date(s.updatedAt).toISOString(),
-    s.currentPrice ?? '',
-    s.priceUpdatedAt ? new Date(s.priceUpdatedAt).toISOString() : ''
-  ]);
-  const csv = [headers, ...rows].map(r => r.map(cell => {
-    const str = String(cell ?? '');
-    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-      return '"' + str.replaceAll('"','""') + '"';
-    }
-    return str;
-  }).join(',')).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'stock-tracker.csv';
-  a.click();
-  URL.revokeObjectURL(url);
-});
+// (CSV export removed)
 
-// Import
-// No import per requirements
+// JSON Export
+if (exportJsonBtn) {
+  exportJsonBtn.addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(appState, null, 2)], { type: 'application/json;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'stock-tracker.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+}
+
+// JSON Import
+if (importJsonInput) {
+  if (importJsonBtn) {
+    importJsonBtn.addEventListener('click', () => importJsonInput.click());
+  }
+  importJsonInput.addEventListener('change', async (e) => {
+    try {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const text = await file.text();
+      const data = JSON.parse(text);
+      // Basic validation: expect an object with array stocks
+      if (!data || typeof data !== 'object' || !Array.isArray(data.stocks)) {
+        alert('Invalid JSON format. Expected { "stocks": [...] }');
+        return;
+      }
+      // Normalize minimal fields and set missing timestamps/ids
+      const now = Date.now();
+      const normalized = data.stocks.map((s) => ({
+        id: s.id || (typeof s.name === 'string' ? (s.id ?? (Math.random().toString(36).slice(2) + now.toString(36))) : (Math.random().toString(36).slice(2) + now.toString(36))),
+        name: String(s.name || '').trim(),
+        fundCategory: String(s.fundCategory || ''),
+        techCategory: String(s.techCategory || ''),
+        sector: String(s.sector || ''),
+        marketCap: String(s.marketCap || ''),
+        strategyType: String(s.strategyType || ''),
+        stockGroup: String(s.stockGroup || ''),
+        buyZones: Array.isArray(s.buyZones) ? s.buyZones : [],
+        sellZones: Array.isArray(s.sellZones) ? s.sellZones : [],
+        avgZones: Array.isArray(s.avgZones) ? s.avgZones : [],
+        currentPrice: (s.currentPrice == null || Number.isNaN(Number(s.currentPrice))) ? null : Number(s.currentPrice),
+        status: s.status || 'watching',
+        notes: String(s.notes || ''),
+        updatedAt: Number.isFinite(Number(s.updatedAt)) ? Number(s.updatedAt) : now,
+        priceUpdatedAt: Number.isFinite(Number(s.priceUpdatedAt)) ? Number(s.priceUpdatedAt) : null,
+        symbolNSE: String(s.symbolNSE || ''),
+        symbolBSE: String(s.symbolBSE || ''),
+        stopLoss: s.stopLoss || '',
+        positionSize: s.positionSize || ''
+      })).filter(s => s.name);
+      appState = { stocks: normalized };
+      saveState(appState);
+      render();
+      // reset input so same file can be re-imported if needed
+      importJsonInput.value = '';
+      alert('Import successful.');
+    } catch (err) {
+      console.error('Import failed', err);
+      alert('Failed to import JSON. See console for details.');
+    }
+  });
+}
 
 // Initial render
 render();
